@@ -1,5 +1,7 @@
 package br.com.caelum.ingresso.controller;
 
+import java.util.List;
+
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,69 +18,54 @@ import br.com.caelum.ingresso.dao.SalaDao;
 import br.com.caelum.ingresso.dao.SessaoDao;
 import br.com.caelum.ingresso.model.Sessao;
 import br.com.caelum.ingresso.model.form.SessaoForm;
+import br.com.caelum.ingresso.validacao.GerenciadorDeSessao;
 
 @Controller
 public class SessaoController {
 
-    
-    @Autowired
-    private SalaDao salaDao;
-    
-    @Autowired
-    private FilmeDao filmeDao;
-    
-    @Autowired
-    private SessaoDao sessaoDao;
+	@Autowired
+	private SalaDao salaDao;
 
-    @GetMapping("/admin/sessao")
-    public ModelAndView form(@RequestParam("salaId") Integer salaId, SessaoForm form){
+	@Autowired
+	private FilmeDao filmeDao;
 
-    	form.setSalaId(salaId);
-    	
-        ModelAndView modelAndView = new ModelAndView("sessao/sessao");
-        
-        modelAndView.addObject("sala", salaDao.findOne(salaId));
-        modelAndView.addObject("filmes", filmeDao.findAll());
-        modelAndView.addObject("form", form);
+	@Autowired
+	private SessaoDao sessaoDao;
 
-        return modelAndView;
-    }
+	@GetMapping("/admin/sessao")
+	public ModelAndView form(@RequestParam("salaId") Integer salaId, SessaoForm form) {
 
+		form.setSalaId(salaId);
 
-    @PostMapping(value = "/admin/sessao")
-    @Transactional
-    public ModelAndView salva(@Valid SessaoForm form, BindingResult result){
+		ModelAndView modelAndView = new ModelAndView("sessao/sessao");
 
-    	if(result.hasErrors()){
-    		form(form.getSalaId(), form);
-    	}
-    	
-        ModelAndView modelAndView = new ModelAndView("redirect:/admin/sala/"
-        		+form.getSalaId()+"/sessoes");
-        
-        Sessao sessao = form.toSessao(salaDao, filmeDao);
-        sessaoDao.save(sessao);
+		modelAndView.addObject("sala", salaDao.findOne(salaId));
+		modelAndView.addObject("filmes", filmeDao.findAll());
+		modelAndView.addObject("form", form);
 
-        return modelAndView;
-    }
+		return modelAndView;
+	}
 
+	@PostMapping(value = "/admin/sessao")
+	@Transactional
+	public ModelAndView salva(@Valid SessaoForm form, BindingResult result) {
 
-//    @GetMapping(value="/admin/filmes")
-//    public ModelAndView lista(){
-//
-//        ModelAndView modelAndView = new ModelAndView("filme/lista");
-//
-//        modelAndView.addObject("filmes", filmeDao.findAll());
-//
-//        return modelAndView;
-//    }
+		if (result.hasErrors()) {
+			form(form.getSalaId(), form);
+		}
 
+		Sessao sessao = form.toSessao(salaDao, filmeDao);
+		List<Sessao> sessoesDaSala = sessaoDao.buscarSessoesDaSala(sessao.getSala());
 
-//    @DeleteMapping("/admin/filme/{id}")
-//    @ResponseBody
-//    @Transactional
-//    public void delete(@PathVariable("id") Integer id){
-//        filmeDao.delete(id);
-//    }
+		GerenciadorDeSessao gereciador = new GerenciadorDeSessao(sessoesDaSala);
+
+		if (gereciador.cabe(sessao)) {
+			sessaoDao.save(sessao);
+			
+			 return new ModelAndView("redirect:/admin/sala/" + form.getSalaId() + "/sessoes");
+		}
+		System.out.println("horario nao pooode");
+		return form(form.getSalaId(), form);
+	}
 
 }
