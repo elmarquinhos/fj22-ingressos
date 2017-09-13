@@ -22,16 +22,16 @@ public class SessaoDao {
 	}
 
 	public List<Sessao> buscarSessoesDaSala(Sala sala) {
-		return manager.createQuery("select s from Sessao s where s.sala = :sala"
-				, Sessao.class)
-				.setParameter("sala", sala)
-				.getResultList();
+		return manager.createQuery("select s from Sessao s where s.sala = :sala", Sessao.class)
+				.setParameter("sala", sala).getResultList();
 	}
-	
+
 	public List<Sessao> buscarSessoesDoFilme(Filme filme) {
-		return manager.createQuery("select s from Sessao s where s.filme = :filme"
-				, Sessao.class)
-				.setParameter("filme", filme)
-				.getResultList();
+		return manager.createQuery("select s from Sessao s where s.filme = :filme", Sessao.class)
+				.setParameter("filme", filme).getResultList();
+	}
+
+	public Sessao findOne(Integer id) {
+		return manager.find(Sessao.class, id);
 	}
 }
